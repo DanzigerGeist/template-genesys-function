@@ -1,63 +1,35 @@
 {
   "$schema": "https://deno.land/x/deno/cli/schemas/config-file.v1.json",
-  "name": "@danzigergeist/template-deno",
-  "description": "A Deno template",
+  "name": "@danzigergeist/template-genesys-function",
+  "description": "A Deno template for Genesys Cloud functions",
   "version": "0.1.0",
   "imports": {
-    "@deno/dnt": "jsr:@deno/dnt@^0.42.3",
     "@std/assert": "jsr:@std/assert@^1.0.18",
-    "@std/testing": "jsr:@std/testing@^1.0.17"
+    "@std/testing": "jsr:@std/testing@^1.0.17",
+    "aws-lambda": "npm:@types/aws-lambda@^8.10.161",
+    "purecloud-platform-client-v2": "npm:purecloud-platform-client-v2@^248.0.0"
   },
-  "exports": {
-    ".": "./src/mod.ts"
-  },
-  "compilerOptions": {
-    "lib": [
-      "deno.window",
-      "dom"
-    ]
-  },
-  "tasks": {
+   "tasks": {
     "benchmark": {
       "description": "Run benchmarks",
       "command": "deno bench benchmarks/ --permit-no-files --quiet --allow-all"
     },
-    "build:bundle:browser": {
-      "description": "Build browser bundle into target/bundle/index.browser.js",
-      "command": "mkdir -p target/bundle && deno bundle --platform=browser --format=iife --minify src/mod.ts > target/bundle/index.browser.js"
-    },
-    "build:bundle:browser:obfuscated": {
-      "description": "Optionally obfuscate browser bundle into target/bundle/index.browser.obfuscated.js",
+     "build:genesys": {
+       "description": "Bundle function into target/index.js (CJS, non-obfuscated)",
+       "command": "mkdir -p target && deno bundle --platform=deno --format=cjs src/mod.ts > target/index.js"
+     },
+    "build:genesys:zip": {
+      "description": "Create Genesys Cloud function zip in target/index.zip",
       "dependencies": [
-        "build:bundle:browser"
+        "build:genesys"
       ],
-      "command": "deno run -A npm:javascript-obfuscator target/bundle/index.browser.js --output target/bundle/index.browser.obfuscated.js --compact true --control-flow-flattening true --split-strings true --string-array true --string-array-encoding base64 --unicode-escape-sequence true --target browser"
-    },
-    "build:bundle:node": {
-      "description": "Build node-compatible bundle into target/bundle/index.node.js",
-      "command": "mkdir -p target/bundle && deno bundle --platform=deno --format=esm --minify src/mod.ts > target/bundle/index.node.js"
-    },
-    "build:bundle:node:obfuscated": {
-      "description": "Optionally obfuscate node bundle into target/bundle/index.node.obfuscated.js",
-      "dependencies": [
-        "build:bundle:node"
-      ],
-      "command": "deno run -A npm:javascript-obfuscator target/bundle/index.node.js --output target/bundle/index.node.obfuscated.js --compact true --control-flow-flattening true --split-strings true --string-array true --string-array-encoding base64 --unicode-escape-sequence true --target node"
-    },
-    "build:binary": {
-      "description": "Compile standalone binary into target/binary/app",
-      "command": "mkdir -p target/binary && deno compile -A --output target/binary/app src/mod.ts"
-    },
-    "build:npm": {
-      "description": "Build npm package into target/npm using dnt",
-      "command": "deno eval \"const cfg = JSON.parse(await Deno.readTextFile('deno.json')); const { build, emptyDir } = await import('@deno/dnt'); await emptyDir('./target/npm'); await build({ entryPoints: ['./src/mod.ts'], outDir: './target/npm', shims: { deno: true }, scriptModule: false, typeCheck: false, declaration: 'separate', test: false, package: { name: cfg.name, version: cfg.version, description: cfg.description } });\""
+      "command": "cd target && zip -qj index.zip index.js"
     },
     "clean": {
       "description": "Remove cache and generated artifacts",
       "dependencies": [
         "clean:cache",
         "clean:coverage",
-        "clean:docs",
         "clean:target"
       ]
     },
@@ -69,19 +41,14 @@
       "description": "Remove coverage artifacts",
       "command": "rm -rf .coverage"
     },
-    "clean:docs": {
-      "description": "Remove generated documentation artifacts",
-      "command": "rm -rf docs"
-    },
     "clean:target": {
       "description": "Remove target artifacts",
       "command": "rm -rf target"
     },
     "check": {
-      "description": "Run format, lint, type, and docs checks",
+      "description": "Run format, lint, and type checks",
       "dependencies": [
         "check:dependencies",
-        "check:docs",
         "check:format",
         "check:lint",
         "check:types"
@@ -91,10 +58,6 @@
       "description": "Verify dependencies and lockfile are in sync",
       "command": "deno install --frozen"
     },
-    "check:docs": {
-      "description": "Lint JSDoc and validate doc code blocks",
-      "command": "deno doc --lint src/ && deno check --doc-only src/"
-    },
     "check:format": {
       "description": "Validate code formatting",
       "command": "deno fmt --check"
@@ -103,51 +66,9 @@
       "description": "Run lint checks",
       "command": "deno lint"
     },
-    "check:publish:jsr": {
-      "description": "Verify JSR publish flow with a dry-run",
-      "command": "deno publish --dry-run --allow-dirty"
-    },
-    "check:publish:npm": {
-      "description": "Verify npm publish flow with a dry-run",
-      "dependencies": [
-        "build:npm"
-      ],
-      "command": "cd target/npm && npm publish --dry-run"
-    },
-    "check:publish": {
-      "description": "Verify dry-run publish flows for JSR and npm",
-      "dependencies": [
-        "check",
-        "test",
-        "security"
-      ],
-      "command": "deno task check:publish:jsr && deno task check:publish:npm"
-    },
     "check:types": {
       "description": "Run type checking with plain deno check",
       "command": "deno check"
-    },
-    "docs": {
-      "description": "Generate HTML docs into docs/",
-      "command": "deno doc --lint --html --output=docs src/"
-    },
-    "publish": {
-      "description": "Run checks, then publish package to JSR and npm",
-      "dependencies": [
-        "check:publish"
-      ],
-      "command": "deno task publish:jsr && deno task publish:npm"
-    },
-    "publish:npm": {
-      "description": "Publish npm package from target/npm (requires npm auth)",
-      "dependencies": [
-        "build:npm"
-      ],
-      "command": "cd target/npm && npm publish"
-    },
-    "publish:jsr": {
-      "description": "Publish package to JSR",
-      "command": "deno publish"
     },
     "security": {
       "description": "Run security checks",
@@ -213,7 +134,6 @@
   },
   "exclude": [
     ".coverage/",
-    "docs/",
     "target/"
   ],
   "fmt": {
@@ -226,7 +146,6 @@
     ],
     "exclude": [
       ".coverage/",
-      "docs/",
       "target/"
     ]
   },
@@ -238,22 +157,7 @@
     ],
     "exclude": [
       ".coverage/",
-      "docs/",
       "target/"
-    ]
-  },
-  "publish": {
-    "exclude": [
-      ".coverage/",
-      ".idea/",
-      ".DS_Store",
-      ".github/",
-      ".vscode/",
-      "benchmarks/",
-      "cog.toml",
-      "docs/",
-      "target/",
-      "tests/"
     ]
   }
 }

@@ -1,22 +1,23 @@
-import { assertEquals, assertThrows } from "@std/assert";
-import { average, sum } from "../src/mod.ts";
+import { assertEquals } from "@std/assert";
+import type { Context } from "aws-lambda";
+import { handler } from "../src/mod.ts";
 
-Deno.test("sum adds all values", () => {
-  assertEquals(sum([1, 2, 3, 4]), 10);
-});
+const stubContext: Context = {
+  callbackWaitsForEmptyEventLoop: false,
+  functionName: "test",
+  functionVersion: "1",
+  invokedFunctionArn: "arn:aws:lambda:us-east-1:000000000000:function:test",
+  memoryLimitInMB: "128",
+  awsRequestId: "test-request-id",
+  logGroupName: "test-log-group",
+  logStreamName: "test-log-stream",
+  getRemainingTimeInMillis: () => 30000,
+  done: () => {},
+  fail: () => {},
+  succeed: () => {},
+};
 
-Deno.test("sum returns 0 for an empty list", () => {
-  assertEquals(sum([]), 0);
-});
-
-Deno.test("average computes the arithmetic mean", () => {
-  assertEquals(average([2, 4, 6, 8]), 5);
-});
-
-Deno.test("average throws on an empty list", () => {
-  assertThrows(
-    () => average([]),
-    Error,
-    "Cannot compute average of an empty array.",
-  );
+Deno.test("handler returns expected response", async () => {
+  const response = await handler({}, stubContext, () => {});
+  assertEquals(response, { exampleOutput: "Hello from Genesys Cloud function" });
 });
