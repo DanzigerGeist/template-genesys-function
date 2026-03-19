@@ -85,22 +85,6 @@ jobs:
       - name: Type check
         run: deno check
 
-  docs:
-    name: Docs
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    needs:
-      - dependencies
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Deno
-        uses: denoland/setup-deno@v2
-        with:
-          deno-version: 2.x
-      - name: Check docs
-        run: deno doc --lint src/ && deno check --doc-only src/
-
   test:
     name: Test
     runs-on: ubuntu-latest

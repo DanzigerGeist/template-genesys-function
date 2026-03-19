@@ -1,24 +1,13 @@
-/**
- * Returns the sum of all numbers in `values`.
- */
-export function sum(values: readonly number[]): number {
-  let total = 0;
-  for (const value of values) {
-    total += value;
-  }
-
-  return total;
-}
+import type { FunctionHandler } from "./types/mod.ts";
 
 /**
- * Returns the arithmetic mean of `values`.
+ * Genesys Cloud function entry point.
  *
- * @throws {Error} When `values` is empty.
+ * Receives a {@linkcode FunctionRequest} from the Data Action and returns
+ * a {@linkcode FunctionResponse} to the calling Architect flow.
  */
-export function average(values: readonly number[]): number {
-  if (values.length === 0) {
-    throw new Error("Cannot compute average of an empty array.");
-  }
-
-  return sum(values) / values.length;
-}
+export const handler: FunctionHandler = (_request, _context) => {
+  return Promise.resolve({
+    exampleOutput: "Hello from Genesys Cloud function",
+  });
+};

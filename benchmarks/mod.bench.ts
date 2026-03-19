@@ -1,11 +1,8 @@
-import { average, sum } from "../src/mod.ts";
+import { handler } from "../src/mod.ts";
+import type { Context } from "aws-lambda";
 
-const numbers = Array.from({ length: 1_000 }, (_, index) => index);
+const stubContext = {} as Context;
 
-Deno.bench("sum 1k numbers", () => {
-  sum(numbers);
-});
-
-Deno.bench("average 1k numbers", () => {
-  average(numbers);
+Deno.bench("handler", async () => {
+  await handler({}, stubContext, () => {});
 });
