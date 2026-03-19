@@ -1,0 +1,30 @@
+from_latest_tag = true
+ignore_merge_commits = true
+tag_prefix = "v"
+pre_bump_hooks = [
+  """deno eval "const path='deno.json'; const cfg=JSON.parse(await Deno.readTextFile(path)); cfg.version='{{version}}'; await Deno.writeTextFile(path, JSON.stringify(cfg, null, 2) + '\\n');" """
+]
+
+[changelog]
+path = "CHANGELOG.md"
+
+[git_hooks.commit-msg]
+script = """#!/bin/sh
+set -e
+cog verify --file "$1"
+"""
+
+[git_hooks.pre-commit]
+script = """#!/bin/sh
+set -e
+deno task check:format
+deno task check:lint
+"""
+
+[git_hooks.pre-push]
+script = """#!/bin/sh
+set -e
+deno task check
+deno task test
+deno task security
+"""

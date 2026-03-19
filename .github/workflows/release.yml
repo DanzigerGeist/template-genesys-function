@@ -1,0 +1,127 @@
+name: Release
+
+on:
+  push:
+    branches: [master]
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      should_release: ${{ steps.decide.outputs.should_release }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Dry-run version bump
+        id: dry-run
+        uses: cocogitto/cocogitto-action@v4
+        with:
+          command: bump
+          args: --auto --dry-run
+        continue-on-error: true
+      - name: Decide whether to release
+        id: decide
+        run: echo "should_release=${{ steps.dry-run.outcome == 'success' }}" >> "$GITHUB_OUTPUT"
+      - name: Bump version
+        if: steps.decide.outputs.should_release == 'true'
+        uses: cocogitto/cocogitto-action@v4
+        with:
+          command: bump
+          args: --auto
+      - name: Push release commit and tag
+        if: steps.decide.outputs.should_release == 'true'
+        run: git push && git push --tags
+      - name: Get version tag
+        if: steps.decide.outputs.should_release == 'true'
+        id: version
+        run: echo "version=$(git describe --tags)" >> "$GITHUB_OUTPUT"
+
+  github-release:
+    name: GitHub Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: release
+    if: needs.release.outputs.should_release == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release.outputs.version }}
+          fetch-depth: 0
+      - name: Strip v prefix
+        id: version
+        run: echo "number=${TAG#v}" >> "$GITHUB_OUTPUT"
+        env:
+          TAG: ${{ needs.release.outputs.version }}
+      - name: Generate changelog
+        id: changelog
+        uses: cocogitto/cocogitto-action@v4
+        with:
+          command: changelog
+          args: --at ${{ steps.version.outputs.number }}
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.release.outputs.version }}
+          body: ${{ steps.changelog.outputs.stdout }}
+          generate_release_notes: false
+
+  publish-jsr:
+    name: Publish to JSR
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: release
+    if: needs.release.outputs.should_release == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release.outputs.version }}
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: 2.x
+      - name: Publish
+        run: deno publish
+
+  publish-npm:
+    name: Publish to GitHub Packages
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: release
+    if: needs.release.outputs.should_release == 'true'
+    permissions:
+      packages: write
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release.outputs.version }}
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: 2.x
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://npm.pkg.github.com
+      - name: Build npm package
+        run: deno task build:npm
+      - name: Publish
+        run: cd target/npm && npm publish --access public
