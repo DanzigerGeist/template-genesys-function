@@ -25,6 +25,6 @@ deno task check:lint
 script = """#!/bin/sh
 set -e
 deno task check
-deno task test
+deno task test:fast
 deno task security
 """

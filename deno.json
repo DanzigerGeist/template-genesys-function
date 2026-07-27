@@ -3,27 +3,82 @@
   "name": "@danzigergeist/template-genesys-function",
   "description": "A Deno template for Genesys Cloud functions",
   "version": "0.1.0",
-  "imports": {
-    "@std/assert": "jsr:@std/assert@^1.0.18",
-    "@std/testing": "jsr:@std/testing@^1.0.17",
-    "aws-lambda": "npm:@types/aws-lambda@^8.10.161",
-    "purecloud-platform-client-v2": "npm:purecloud-platform-client-v2@^248.0.0"
+  "license": "MIT",
+  "repository": "https://github.com/DanzigerGeist/template-genesys-function",
+  "exports": {
+    ".": "./src/mod.ts"
   },
-   "tasks": {
+  "imports": {
+    "@std/assert": "jsr:@std/assert@^1.0.19",
+    "@std/testing": "jsr:@std/testing@^1.0.19",
+    "aws-lambda": "npm:@types/aws-lambda@^8.10.162",
+    "purecloud-platform-client-v2": "npm:purecloud-platform-client-v2@^257.0.0"
+  },
+  "compilerOptions": {
+    "exactOptionalPropertyTypes": true,
+    "isolatedDeclarations": true,
+    "noImplicitReturns": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noUncheckedIndexedAccess": true
+  },
+  "test": {
+    "sanitizeOps": true,
+    "sanitizeResources": true
+  },
+  "tasks": {
     "benchmark": {
       "description": "Run benchmarks",
-      "command": "deno bench benchmarks/ --permit-no-files --quiet --allow-all"
+      "command": "deno bench benchmarks/ --permit-no-files --quiet --no-prompt"
     },
-     "build:genesys": {
-       "description": "Bundle function into target/index.js (CJS, non-obfuscated)",
-       "command": "mkdir -p target && deno bundle --platform=deno --format=cjs src/mod.ts > target/index.js"
-     },
+    "build:genesys": {
+      "description": "Bundle function into target/index.js (CJS, non-obfuscated)",
+      "command": "mkdir -p target && deno bundle --platform=deno --format=cjs src/mod.ts > target/index.js"
+    },
     "build:genesys:zip": {
       "description": "Create Genesys Cloud function zip in target/index.zip",
       "dependencies": [
         "build:genesys"
       ],
       "command": "cd target && zip -qj index.zip index.js"
+    },
+    "check": {
+      "description": "Run dependency, docs, format, lint, type and example checks",
+      "dependencies": [
+        "check:dependencies",
+        "check:examples",
+        "check:format",
+        "check:lint",
+        "check:types"
+      ]
+    },
+    "check:dependencies": {
+      "description": "Install dependencies strictly from the lockfile",
+      "command": "deno ci"
+    },
+    "check:examples": {
+      "description": "Type-check JSDoc example blocks (they call live Genesys, so they are checked, not executed)",
+      "command": "deno check --doc-only src/"
+    },
+    "check:format": {
+      "description": "Validate code formatting",
+      "command": "deno fmt --check"
+    },
+    "check:lint": {
+      "description": "Run lint checks",
+      "command": "deno lint"
+    },
+    "check:types": {
+      "description": "Type-check the function source, tests, and deploy script",
+      "command": "deno check src/ tests/ scripts/"
+    },
+    "ci": {
+      "description": "Run every gate CI runs: checks, coverage, security, and the zip build",
+      "dependencies": [
+        "check",
+        "coverage",
+        "security",
+        "build:genesys:zip"
+      ]
     },
     "clean": {
       "description": "Remove cache and generated artifacts",
@@ -45,30 +100,19 @@
       "description": "Remove target artifacts",
       "command": "rm -rf target"
     },
-    "check": {
-      "description": "Run format, lint, and type checks",
+    "coverage": {
+      "description": "Report coverage and enforce the thresholds configured in deno.json",
       "dependencies": [
-        "check:dependencies",
-        "check:format",
-        "check:lint",
-        "check:types"
-      ]
+        "test"
+      ],
+      "command": "deno coverage .coverage"
     },
-    "check:dependencies": {
-      "description": "Verify dependencies and lockfile are in sync",
-      "command": "deno install --frozen"
-    },
-    "check:format": {
-      "description": "Validate code formatting",
-      "command": "deno fmt --check"
-    },
-    "check:lint": {
-      "description": "Run lint checks",
-      "command": "deno lint"
-    },
-    "check:types": {
-      "description": "Run type checking with plain deno check",
-      "command": "deno check"
+    "publish": {
+      "description": "Deploy the function to Genesys Cloud, setting up anything missing",
+      "dependencies": [
+        "ci"
+      ],
+      "command": "deno run -A scripts/publish.ts"
     },
     "security": {
       "description": "Run security checks",
@@ -86,11 +130,11 @@
     },
     "security:secrets:files": {
       "description": "Scan working tree for leaked credentials (requires gitleaks)",
-      "command": "gitleaks dir . --redact"
+      "command": "gitleaks dir . --redact --verbose"
     },
     "security:secrets:history": {
       "description": "Scan Git history for leaked credentials (requires gitleaks)",
-      "command": "gitleaks git . --redact"
+      "command": "gitleaks git . --redact --verbose"
     },
     "security:vulnerabilities": {
       "description": "Scan dependencies for known vulnerabilities",
@@ -112,8 +156,12 @@
       "command": "deno install"
     },
     "test": {
-      "description": "Run test suite",
-      "command": "deno test tests/ --coverage=.coverage --parallel --quiet --fail-fast --allow-all --permit-no-files"
+      "description": "Run test suite, reporting every failure",
+      "command": "deno test tests/ --coverage=.coverage --parallel --quiet --no-prompt --allow-env --allow-sys --allow-read --permit-no-files"
+    },
+    "test:fast": {
+      "description": "Run test suite, stopping at the first failure",
+      "command": "deno test tests/ --coverage=.coverage --parallel --quiet --fail-fast --no-prompt --allow-env --allow-sys --allow-read --permit-no-files"
     },
     "update": {
       "description": "Update dependencies within current semver ranges",
@@ -139,8 +187,9 @@
   "fmt": {
     "lineWidth": 120,
     "include": [
-      "benchmarks/",
       "README.md",
+      "benchmarks/",
+      "scripts/",
       "src/",
       "tests/"
     ],
@@ -158,6 +207,40 @@
     "exclude": [
       ".coverage/",
       "target/"
-    ]
+    ],
+    "rules": {
+      "tags": [
+        "recommended",
+        "jsr",
+        "workspace"
+      ],
+      "include": [
+        "ban-untagged-todo",
+        "default-param-last",
+        "eqeqeq",
+        "explicit-module-boundary-types",
+        "no-console",
+        "no-eval",
+        "no-implicit-declare-namespace-export",
+        "no-node-globals",
+        "no-non-null-assertion",
+        "no-process-global",
+        "no-self-compare",
+        "no-sparse-arrays",
+        "no-sync-fn-in-async-fn",
+        "no-throw-literal",
+        "no-top-level-await",
+        "no-undef",
+        "no-useless-rename",
+        "triple-slash-reference"
+      ]
+    }
+  },
+  "coverage": {
+    "thresholds": {
+      "branches": 80,
+      "functions": 100,
+      "lines": 80
+    }
   }
 }
