@@ -11,7 +11,7 @@
     "jsr:@std/path@^1.1.6": "1.1.6",
     "jsr:@std/testing@^1.0.20": "1.0.20",
     "npm:@types/aws-lambda@^8.10.163": "8.10.163",
-    "npm:purecloud-platform-client-v2@262": "262.0.0"
+    "npm:purecloud-platform-client-v2@265": "265.0.0"
   },
   "jsr": {
     "@std/assert@1.0.19": {
@@ -90,8 +90,8 @@
     "asynckit@0.4.0": {
       "integrity": "sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q=="
     },
-    "axios@1.20.0": {
-      "integrity": "sha512-r8aOh8j9cGKpgQAqpzrUHnSIc6a59Y3Xf/cv8sy1DrHCkZHzQGEuoq1tARk6qSyDdtQGSDgpb9kFlruzPvrgwg==",
+    "axios@1.21.0": {
+      "integrity": "sha512-YCzXMB53Q9PZBsh7yN7wtapit4WepwcHS2fP8QhGsBxSz5YtgYobV7GGlWlAJi+RxfU77GQTQi2DSLUma42EYA==",
       "dependencies": [
         "follow-redirects",
         "form-data",
@@ -187,8 +187,8 @@
     "fn.name@1.1.0": {
       "integrity": "sha512-GRnmB5gPyJpAhTQdSZTSp9uaPSvl09KoYcMQtsB9rQoOmzs9dH6ffeccH+Z+cv6P68Hu5bC6JjRh4Ah/mHSNRw=="
     },
-    "follow-redirects@1.16.0": {
-      "integrity": "sha512-y5rN/uOsadFT/JfYwhxRS5R7Qce+g3zG97+JrtFZlC9klX/W5hD7iiLzScI4nZqUS7DNUdhPgw4xI8W2LuXlUw=="
+    "follow-redirects@1.16.3": {
+      "integrity": "sha512-toOSoqN6d51Wjf1aOFJYcoVv1aND9rj/CwjLU0Vz40oDuSpWDayCeKe4JpL5NL0WdFvoOOCI3BRo69HahjbR1A=="
     },
     "form-data@4.0.6": {
       "integrity": "sha512-vKatAh4SlVfgbv+YtmhiRjhEMJsYpsG1Y2rMQtR+SVSbytsSD1YGzDIcrAJmdFec88u/+VoGmxnl+80gL1tRCQ==",
@@ -304,8 +304,8 @@
     "proxy-from-env@2.1.0": {
       "integrity": "sha512-cJ+oHTW1VAEa8cJslgmUZrc+sjRKgAKl3Zyse6+PV38hZe/V6Z14TbCuXcan9F9ghlz4QrFr2c92TNF82UkYHA=="
     },
-    "purecloud-platform-client-v2@262.0.0": {
-      "integrity": "sha512-Zb2dwvYzgOIL4VgsWnvB15kWGt5PycQkd5heINui6FyiqsYjGYy/mdnH9pOsKfNLlrWVfzk5ILEGNyomreVbVA==",
+    "purecloud-platform-client-v2@265.0.0": {
+      "integrity": "sha512-8zOriaRn0jgicHHlymS3XzMHm0Msw4lpxfThjJT56efY6ydyDqzqdPTBL9WOkLPSp3JGLnrWZkctgof0IKLI3w==",
       "dependencies": [
         "axios",
         "configparser",
@@ -374,7 +374,7 @@
       "jsr:@std/assert@^1.0.19",
       "jsr:@std/testing@^1.0.20",
       "npm:@types/aws-lambda@^8.10.163",
-      "npm:purecloud-platform-client-v2@262"
+      "npm:purecloud-platform-client-v2@265"
     ]
   }
 }
